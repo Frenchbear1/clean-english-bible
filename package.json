@@ -1,0 +1,15 @@
+{
+  "name": "bible-app",
+  "version": "0.1.0",
+  "description": "Bible app desktop shell",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "set NODE_ENV=development&& electron ."
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electronmon": "^2.0.3",
+    "chokidar": "^3.6.0"
+  }
+}

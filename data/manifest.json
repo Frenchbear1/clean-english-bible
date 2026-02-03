@@ -1,0 +1,42 @@
+[
+  {
+    "id": "dmVyc2lvbnMvZW4vRU5HTElTSCBTVEFOREFSRCBWRVJTSU9OLmpzb24_",
+    "name": "ENGLISH STANDARD VERSION",
+    "group": "versions",
+    "lang": "en",
+    "path": "data/translations/dmVyc2lvbnMvZW4vRU5HTElTSCBTVEFOREFSRCBWRVJTSU9OLmpzb24_.json",
+    "source": "versions/en/ENGLISH STANDARD VERSION.json"
+  },
+  {
+    "id": "dmVyc2lvbnMvZW4vSU5URVJOQVRJT05BTCBTVEFOREFSRCBWRVJTSU9OLmpzb24_",
+    "name": "INTERNATIONAL STANDARD VERSION",
+    "group": "versions",
+    "lang": "en",
+    "path": "data/translations/dmVyc2lvbnMvZW4vSU5URVJOQVRJT05BTCBTVEFOREFSRCBWRVJTSU9OLmpzb24_.json",
+    "source": "versions/en/INTERNATIONAL STANDARD VERSION.json"
+  },
+  {
+    "id": "dmVyc2lvbnMvZW4vS0lORyBKQU1FUyBCSUJMRS5qc29u",
+    "name": "KING JAMES BIBLE",
+    "group": "versions",
+    "lang": "en",
+    "path": "data/translations/dmVyc2lvbnMvZW4vS0lORyBKQU1FUyBCSUJMRS5qc29u.json",
+    "source": "versions/en/KING JAMES BIBLE.json"
+  },
+  {
+    "id": "dmVyc2lvbnMvZW4vTkVXIElOVEVSTkFUSU9OQUwgVkVSU0lPTi5qc29u",
+    "name": "NEW INTERNATIONAL VERSION",
+    "group": "versions",
+    "lang": "en",
+    "path": "data/translations/dmVyc2lvbnMvZW4vTkVXIElOVEVSTkFUSU9OQUwgVkVSU0lPTi5qc29u.json",
+    "source": "versions/en/NEW INTERNATIONAL VERSION.json"
+  },
+  {
+    "id": "dmVyc2lvbnMvZW4vTkVXIExJVklORyBUUkFOU0xBVElPTi5qc29u",
+    "name": "NEW LIVING TRANSLATION",
+    "group": "versions",
+    "lang": "en",
+    "path": "data/translations/dmVyc2lvbnMvZW4vTkVXIExJVklORyBUUkFOU0xBVElPTi5qc29u.json",
+    "source": "versions/en/NEW LIVING TRANSLATION.json"
+  }
+]

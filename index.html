@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bible — NIV</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <div class="window-bar">
+        <div class="window-title">Bible</div>
+        <div class="window-controls">
+          <button class="window-btn" id="appMinimize" type="button" aria-label="Minimize">─</button>
+          <button class="window-btn" id="appMaximize" type="button" aria-label="Maximize">▢</button>
+          <button class="window-btn danger" id="appClose" type="button" aria-label="Close">✕</button>
+        </div>
+      </div>
+      <header class="topbar">
+        <div class="view-switch">
+          <button class="tab active" data-view="read">Read</button>
+          <button class="tab" data-view="highlights">Highlights</button>
+          <button class="tab" data-view="favorites">Favorites</button>
+          <button class="tab" data-view="memorize">Memorize</button>
+        </div>
+        <div class="topbar-actions">
+          <div class="search">
+            <div class="search-field">
+              <input id="searchInput" type="search" placeholder="Search NIV…" autocomplete="off" />
+            </div>
+          </div>
+        </div>
+        <div class="topbar-controls" id="topbarControls">
+          <div class="select-shell" data-select="bookSelect">
+            <div class="select-label">Book</div>
+            <select id="bookSelect" class="native-select"></select>
+            <button class="select-trigger" type="button" aria-haspopup="listbox"></button>
+            <div class="select-menu" hidden></div>
+          </div>
+          <div class="select-shell" data-select="chapterSelect">
+            <div class="select-label">Chapter</div>
+            <select id="chapterSelect" class="native-select"></select>
+            <button class="select-trigger" type="button" aria-haspopup="listbox"></button>
+            <div class="select-menu" hidden></div>
+          </div>
+          <div class="select-shell" data-select="verseSelect">
+            <div class="select-label">Verse</div>
+            <select id="verseSelect" class="native-select"></select>
+            <button class="select-trigger" type="button" aria-haspopup="listbox"></button>
+            <div class="select-menu" hidden></div>
+          </div>
+          <div class="select-shell translation" data-select="translationSelect">
+            <div class="select-label">Translation</div>
+            <select id="translationSelect" class="native-select"></select>
+            <button class="select-trigger" type="button" aria-haspopup="listbox"></button>
+            <div class="select-menu" hidden></div>
+          </div>
+        </div>
+      </header>
+
+      <section class="controls">
+        <div class="status" id="statusLine">Loading NIV…</div>
+      </section>
+
+      <main class="view" id="view-read" data-view="read">
+        <div class="cards" id="verseList"></div>
+        <div class="search-results" id="searchResults" hidden>
+          <div class="results-header">
+            <div>Search results</div>
+            <div class="muted" id="resultsCount"></div>
+          </div>
+          <div class="results-list" id="resultsList"></div>
+        </div>
+      </main>
+
+      <main class="view" id="view-highlights" data-view="highlights" hidden>
+        <div class="highlight-toolbar">
+          <div class="select-shell" data-select="highlightFilter">
+            <div class="select-label">Filter color</div>
+            <select id="highlightFilter" class="native-select">
+              <option value="all">All colors</option>
+            </select>
+            <button class="select-trigger" type="button" aria-haspopup="listbox"></button>
+            <div class="select-menu" hidden></div>
+          </div>
+          <div class="select-shell" data-select="highlightSort">
+            <div class="select-label">Sort by</div>
+            <select id="highlightSort" class="native-select">
+              <option value="recency">Recency</option>
+              <option value="oldest">Oldest</option>
+              <option value="book">Book order</option>
+              <option value="color">Color group</option>
+            </select>
+            <button class="select-trigger" type="button" aria-haspopup="listbox"></button>
+            <div class="select-menu" hidden></div>
+          </div>
+        </div>
+        <div class="cards" id="highlightList"></div>
+      </main>
+
+      <main class="view" id="view-favorites" data-view="favorites" hidden>
+        <div class="highlight-toolbar">
+          <div class="select-shell" data-select="favoriteFilter">
+            <div class="select-label">Filter color</div>
+            <select id="favoriteFilter" class="native-select">
+              <option value="all">All colors</option>
+            </select>
+            <button class="select-trigger" type="button" aria-haspopup="listbox"></button>
+            <div class="select-menu" hidden></div>
+          </div>
+          <div class="select-shell" data-select="favoriteSort">
+            <div class="select-label">Sort by</div>
+            <select id="favoriteSort" class="native-select">
+              <option value="recency">Recency</option>
+              <option value="oldest">Oldest</option>
+              <option value="book">Book order</option>
+              <option value="color">Color group</option>
+            </select>
+            <button class="select-trigger" type="button" aria-haspopup="listbox"></button>
+            <div class="select-menu" hidden></div>
+          </div>
+        </div>
+        <div class="cards" id="favoriteList"></div>
+      </main>
+
+      <main class="view" id="view-memorize" data-view="memorize" hidden>
+        <div class="memorize-toolbar">
+          <div class="select-shell" data-select="startupSelect">
+            <div class="select-label">Startup verse/group</div>
+            <select id="startupSelect" class="native-select"></select>
+            <button class="select-trigger" type="button" aria-haspopup="listbox"></button>
+            <div class="select-menu" hidden></div>
+          </div>
+          <label class="toggle">
+            <span>Show on startup</span>
+            <input id="startupToggle" type="checkbox" />
+            <span class="toggle-ui" aria-hidden="true"></span>
+          </label>
+        </div>
+        <div class="cards" id="memorizeList"></div>
+      </main>
+
+      <div class="palette-floating" id="palette" hidden>
+        <div class="palette-title">Highlight color</div>
+        <div class="palette-row">
+          <div class="palette-grid" id="paletteGrid"></div>
+        </div>
+        <div class="palette-row palette-actions">
+          <button id="favoriteBtn" class="pill" type="button">Favorite</button>
+          <button id="memorizeBtn" class="pill" type="button">Memorize</button>
+          <button id="removeHighlightPill" class="pill" type="button">Remove</button>
+          <button id="copyBtn" class="pill" type="button">Copy</button>
+          <button id="searchOriginalBtn" class="pill" type="button">Search original</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="startup-overlay" id="startupOverlay" hidden>
+      <div class="startup-card" id="startupCard" role="dialog" aria-modal="true" aria-labelledby="startupTitle">
+        <div class="startup-header">
+          <div class="startup-label">Memorize</div>
+          <div class="window-controls">
+            <button class="window-btn" id="windowMinimize" type="button" aria-label="Minimize">─</button>
+            <button class="window-btn" id="windowMaximize" type="button" aria-label="Maximize">▢</button>
+            <button class="window-btn danger" id="windowClose" type="button" aria-label="Close">✕</button>
+          </div>
+        </div>
+        <div class="startup-title" id="startupTitle">Verse for today</div>
+        <div class="startup-reference" id="startupReference">Loading…</div>
+        <div class="startup-text" id="startupText">Preparing your verse.</div>
+        <div class="startup-actions">
+          <button class="primary" id="startupContinue" type="button">Continue</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
