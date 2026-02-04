@@ -53,7 +53,8 @@ const state = {
   startupMemoryId: "",
   startupActiveMemoryId: "",
   lastUpdatedAt: 0,
-  notesVisible: false
+  notesVisible: false,
+  hiddenTools: []
 };
 
 const aliasOverrides = {
@@ -167,7 +168,6 @@ const elements = {
   paletteGrid: document.getElementById("paletteGrid"),
   favoriteBtn: document.getElementById("favoriteBtn"),
   copyBtn: document.getElementById("copyBtn"),
-  searchOriginalBtn: document.getElementById("searchOriginalBtn"),
   noteBtn: document.getElementById("noteBtn"),
   crossRefBtn: document.getElementById("crossRefBtn"),
   removeHighlightPill: document.getElementById("removeHighlightPill"),
@@ -215,7 +215,14 @@ const elements = {
   exportDataBtn: document.getElementById("exportDataBtn"),
   importDataBtn: document.getElementById("importDataBtn"),
   importDataFile: document.getElementById("importDataFile"),
-  transferStatus: document.getElementById("transferStatus")
+  transferStatus: document.getElementById("transferStatus"),
+  toolsBtn: document.getElementById("toolsBtn"),
+  toolsModal: document.getElementById("toolsModal"),
+  toolsClose: document.getElementById("toolsClose"),
+  toolsMeta: document.getElementById("toolsMeta"),
+  toolsResults: document.getElementById("toolsResults"),
+  toolsStatus: document.getElementById("toolsStatusText"),
+  resetToolsBtn: document.getElementById("resetToolsBtn")
 };
 
 let copyResetTimer = null;
@@ -268,6 +275,7 @@ function buildStatePayload(updatedAtOverride) {
     startupEnabled: state.startupEnabled,
     startupMemoryId: state.startupMemoryId,
     notesVisible: state.notesVisible,
+    hiddenTools: state.hiddenTools,
     updatedAt: updatedAtOverride ?? state.lastUpdatedAt,
     version: 2
   };
@@ -287,6 +295,7 @@ function applyStatePayload(payload) {
   state.startupEnabled = payload.startupEnabled || false;
   state.startupMemoryId = payload.startupMemoryId || "";
   state.notesVisible = payload.notesVisible || false;
+  state.hiddenTools = Array.isArray(payload.hiddenTools) ? payload.hiddenTools : [];
   state.lastUpdatedAt = Number(payload.updatedAt) || 0;
 }
 
@@ -348,6 +357,9 @@ function mergePayloads(localPayload = {}, remotePayload = {}) {
     startupEnabled: preferRemote ? remotePayload.startupEnabled : localPayload.startupEnabled,
     startupMemoryId: preferRemote ? remotePayload.startupMemoryId : localPayload.startupMemoryId,
     notesVisible: preferRemote ? remotePayload.notesVisible : localPayload.notesVisible,
+    hiddenTools: Array.isArray(preferRemote ? remotePayload.hiddenTools : localPayload.hiddenTools)
+      ? (preferRemote ? remotePayload.hiddenTools : localPayload.hiddenTools)
+      : [],
     updatedAt: Math.max(localTs, remoteTs),
     version: 2
   };
@@ -390,6 +402,210 @@ function downloadJson(payload) {
   anchor.click();
   anchor.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function shareJson(payload) {
+  if (!navigator.share) return Promise.resolve(false);
+  const json = JSON.stringify(payload, null, 2);
+  const blob = new Blob([json], { type: "application/json" });
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const filename = `aesthetic-bible-backup-${stamp}.json`;
+  const file = new File([blob], filename, { type: "application/json" });
+  const shareData = {
+    title: "Aesthetic Bible Backup",
+    text: "Aesthetic Bible backup file",
+    files: [file]
+  };
+  if (navigator.canShare && !navigator.canShare(shareData)) {
+    return Promise.resolve(false);
+  }
+  return navigator.share(shareData).then(() => true);
+}
+
+function openToolsModal() {
+  if (!elements.toolsModal) return;
+  elements.toolsModal.hidden = false;
+  document.body.classList.add("tools-open");
+}
+
+function closeToolsModal() {
+  if (!elements.toolsModal) return;
+  elements.toolsModal.hidden = true;
+  document.body.classList.remove("tools-open");
+}
+
+function setToolsStatus(text) {
+  if (!elements.toolsStatus) return;
+  elements.toolsStatus.textContent = text;
+}
+
+function clearToolsList() {
+  if (elements.toolsResults) elements.toolsResults.innerHTML = "";
+  if (elements.toolsMeta) elements.toolsMeta.textContent = "";
+}
+
+function buildSelectedRefs() {
+  if (!state.selected || state.selected.size === 0) return [];
+  return Array.from(state.selected)
+    .map((id) => parseVerseId(id))
+    .filter((ref) => ref.book && ref.chapter && ref.verse);
+}
+
+function getSelectedQuery(selected) {
+  const grouped = new Map();
+  selected.forEach((ref) => {
+    const key = `${ref.book}|||${ref.chapter}`;
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key).push(Number(ref.verse));
+  });
+
+  const parts = [];
+  grouped.forEach((verses, key) => {
+    const [book, chapter] = key.split("|||");
+    const sorted = Array.from(new Set(verses)).sort((a, b) => a - b);
+    let start = null;
+    let prev = null;
+    const ranges = [];
+    sorted.forEach((verse) => {
+      if (start === null) {
+        start = verse;
+        prev = verse;
+        return;
+      }
+      if (verse === prev + 1) {
+        prev = verse;
+        return;
+      }
+      ranges.push({ start, end: prev });
+      start = verse;
+      prev = verse;
+    });
+    if (start !== null) {
+      ranges.push({ start, end: prev });
+    }
+    ranges.forEach((range) => {
+      const label = range.start === range.end
+        ? `${book} ${chapter}:${range.start}`
+        : `${book} ${chapter}:${range.start}-${range.end}`;
+      parts.push(label);
+    });
+  });
+
+  return parts.join(", ");
+}
+
+function openExternalUrl(url) {
+  if (window.appShell && typeof window.appShell.openExternal === "function") {
+    window.appShell.openExternal(url);
+    return;
+  }
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+function buildSearchButton(label, hint, url, options = {}) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "tools-search-btn";
+  button.innerHTML = `${escapeHtml(label)}<span>${escapeHtml(hint)}</span>`;
+  let holdTimer = null;
+  let holdTriggered = false;
+  const clearHold = () => {
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+  };
+  button.addEventListener("pointerdown", () => {
+    holdTriggered = false;
+    clearHold();
+    holdTimer = setTimeout(() => {
+      holdTriggered = true;
+      hideToolSource(options.id);
+    }, 1500);
+  });
+  button.addEventListener("pointerup", clearHold);
+  button.addEventListener("pointerleave", clearHold);
+  button.addEventListener("pointercancel", clearHold);
+  button.addEventListener("click", async (event) => {
+    if (holdTriggered) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    if (options.copyQuery) {
+      try {
+        await navigator.clipboard.writeText(options.copyQuery);
+        setToolsStatus("Copied. Paste into the search box.");
+      } catch (err) {
+        setToolsStatus("Open to paste the reference.");
+      }
+    }
+    openExternalUrl(url);
+  });
+  return button;
+}
+
+function hideToolSource(id) {
+  if (!id) return;
+  if (!Array.isArray(state.hiddenTools)) state.hiddenTools = [];
+  if (state.hiddenTools.includes(id)) return;
+  state.hiddenTools.push(id);
+  renderToolsSearchButtons();
+  if (elements.resetToolsBtn) {
+    elements.resetToolsBtn.hidden = state.hiddenTools.length === 0;
+  }
+  saveState();
+}
+
+function resetTools() {
+  state.hiddenTools = [];
+  renderToolsSearchButtons();
+  if (elements.resetToolsBtn) elements.resetToolsBtn.hidden = true;
+  saveState();
+}
+
+function renderToolsSearchButtons() {
+  clearToolsList();
+  const selected = buildSelectedRefs();
+  if (selected.length === 0) {
+    setToolsStatus("Select verse(s) first.");
+    return;
+  }
+  const query = getSelectedQuery(selected);
+  if (elements.toolsMeta) {
+    elements.toolsMeta.textContent = `Selected: ${query}`;
+  }
+
+  const sources = [
+    { id: "original", label: "Search Original Language", hint: "Greek/Hebrew/Aramaic", url: `https://www.google.com/search?q=${encodeURIComponent(`${query} original language`)}` },
+    { id: "google", label: "Search Google", hint: "General web results", url: `https://www.google.com/search?q=${encodeURIComponent(query)}` },
+    { id: "youtube", label: "Search YouTube", hint: "Sermons & videos", url: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}` },
+    { id: "tiktok", label: "Search TikTok", hint: "Short clips", url: `https://www.tiktok.com/search?q=${encodeURIComponent(query)}` },
+    { id: "spotify", label: "Search Spotify", hint: "Podcasts & audio", url: `https://open.spotify.com/search/${encodeURIComponent(query)}` },
+    { id: "applepodcasts", label: "Search Apple Podcasts", hint: "Podcast results", url: `https://podcasts.apple.com/us/search?term=${encodeURIComponent(query)}` },
+    { id: "biblegateway", label: "Search BibleGateway", hint: "Verse lookup", url: `https://www.biblegateway.com/quicksearch/?quicksearch=${encodeURIComponent(query)}` },
+    { id: "biblehub", label: "Search BibleHub", hint: "Commentaries", url: `https://biblehub.com/search.php?q=${encodeURIComponent(query)}` },
+    { id: "blb", label: "Search Blue Letter Bible", hint: "Tools & lexicon", url: `https://www.blueletterbible.org/search/search.cfm?Criteria=${encodeURIComponent(query)}&t=KJV` },
+    { id: "openbible", label: "Search OpenBible", hint: "Cross references", url: `https://www.openbible.info/labs/cross-references/search?q=${encodeURIComponent(query)}` },
+    { id: "duckduckgo", label: "Search DuckDuckGo", hint: "Private search", url: `https://duckduckgo.com/?q=${encodeURIComponent(query)}` },
+    { id: "chatgpt", label: "Search ChatGPT", hint: "AI assistant", url: `https://chat.openai.com/?q=${encodeURIComponent(query)}` },
+    { id: "gemini", label: "Search Gemini", hint: "AI assistant (paste)", url: "https://gemini.google.com/app", copyQuery: query },
+    { id: "grok", label: "Search Grok", hint: "AI assistant", url: `https://grok.com/?q=${encodeURIComponent(query)}` },
+    { id: "deepseek", label: "Search DeepSeek", hint: "AI assistant (paste)", url: "https://chat.deepseek.com", copyQuery: query },
+    { id: "perplexity", label: "Search Perplexity", hint: "AI assistant", url: `https://www.perplexity.ai/?q=${encodeURIComponent(query)}` }
+  ];
+
+  const hidden = new Set(state.hiddenTools || []);
+  if (elements.toolsResults) {
+    sources.forEach((source) => {
+      if (hidden.has(source.id)) return;
+      elements.toolsResults.appendChild(buildSearchButton(source.label, source.hint, source.url, source));
+    });
+  }
+  if (elements.resetToolsBtn) {
+    elements.resetToolsBtn.hidden = hidden.size === 0;
+  }
+  setToolsStatus("Choose a source to search.");
 }
 
 function extractImportPayload(data) {
@@ -665,6 +881,7 @@ function goToChapter(delta) {
     state.currentVerse = "1";
   }
   elements.bookSelect.value = state.currentBook;
+  syncCustomSelect(elements.bookSelect);
   updateChapterOptions();
   updateVerseOptions();
   renderVerses();
@@ -2013,7 +2230,16 @@ function handleSearch(query) {
       </div>
     `;
     card.addEventListener("click", () => {
-      elements.searchInput.value = "";
+      if (elements.searchInput) {
+        elements.searchInput.value = "";
+      }
+      state.navStack = [];
+      state.navStack.push({
+        book: state.currentBook,
+        chapter: state.currentChapter,
+        verse: state.currentVerse
+      });
+      updateFloatingBack();
       handleSearch("");
       applyView("read");
       setTimeout(() => jumpToVerse(entry.book, entry.chapter, entry.verse), 0);
@@ -2096,23 +2322,6 @@ function bindEvents() {
     }
   });
 
-  elements.searchOriginalBtn.addEventListener("click", async () => {
-    const payload = buildSelectionPayload();
-    if (!payload) return;
-    const prompt = "break down this in it's original language whether it be Greek, Hebrew, or Aramaic";
-    const query = `${payload}\n\n${prompt}`;
-    try {
-      await navigator.clipboard.writeText(payload);
-    } catch (err) {
-      console.error("Copy failed", err);
-    }
-    const url = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
-    if (window.appShell && typeof window.appShell.openExternal === "function") {
-      window.appShell.openExternal({ url, browser: "edge" });
-    } else {
-      window.open(url, "_blank");
-    }
-  });
 
   elements.noteBtn.addEventListener("click", (event) => {
     event.stopPropagation();
@@ -2238,10 +2447,37 @@ function bindEvents() {
       }
     });
   }
+  if (elements.toolsBtn) {
+    elements.toolsBtn.addEventListener("click", () => {
+      openToolsModal();
+      renderToolsSearchButtons();
+    });
+  }
+  if (elements.toolsClose) {
+    elements.toolsClose.addEventListener("click", closeToolsModal);
+  }
+  if (elements.toolsModal) {
+    elements.toolsModal.addEventListener("click", (event) => {
+      if (event.target === elements.toolsModal) {
+        closeToolsModal();
+      }
+    });
+  }
+  if (elements.resetToolsBtn) {
+    elements.resetToolsBtn.addEventListener("click", resetTools);
+  }
   if (elements.exportDataBtn) {
     elements.exportDataBtn.addEventListener("click", () => {
-      downloadJson(buildExportPayload());
-      setTransferStatus("Export ready.");
+      const payload = buildExportPayload();
+      downloadJson(payload);
+      shareJson(payload)
+        .then((shared) => {
+          setTransferStatus(shared ? "Export ready. Share sheet opened." : "Export ready.");
+        })
+        .catch((err) => {
+          console.warn("Share failed", err);
+          setTransferStatus("Export ready. Share not available.");
+        });
     });
   }
   if (elements.importDataBtn) {
@@ -2255,9 +2491,10 @@ function bindEvents() {
     const isVerseCard = event.target.closest(".card");
     const isVerseInline = event.target.closest(".verse-inline");
     const inPalette = event.target.closest("#palette");
+    const inTools = event.target.closest(".tools-card");
     const inXref = event.target.closest(".xref-popup");
     const inNote = event.target.closest(".note-popup");
-    if (isVerseCard || isVerseInline || inPalette) return;
+    if (isVerseCard || isVerseInline || inPalette || inTools) return;
     if (inXref) return;
     if (inNote) return;
     clearSelection();
@@ -2298,6 +2535,7 @@ function bindEvents() {
     if (event.target.closest(".xref-popup")) return;
     if (event.target.closest(".note-popup")) return;
     if (event.target.closest(".marker.note")) return;
+    if (event.target.closest(".tools-card")) return;
     closeAllSelectMenus();
     closeAllCrossRefPopups();
     document.querySelectorAll(".note-popup").forEach((popup) => {
@@ -2316,7 +2554,28 @@ function bindEvents() {
 
   elements.prevChapterBtn.addEventListener("click", () => goToChapter(-1));
   elements.nextChapterBtn.addEventListener("click", () => goToChapter(1));
+  let backHoldTimer = null;
+  let backHoldTriggered = false;
+  const clearBackHold = () => {
+    if (backHoldTimer) {
+      clearTimeout(backHoldTimer);
+      backHoldTimer = null;
+    }
+  };
+  elements.xrefBackFloating.addEventListener("pointerdown", () => {
+    backHoldTriggered = false;
+    clearBackHold();
+    backHoldTimer = setTimeout(() => {
+      backHoldTriggered = true;
+      state.navStack = [];
+      updateFloatingBack();
+    }, 1500);
+  });
+  elements.xrefBackFloating.addEventListener("pointerup", clearBackHold);
+  elements.xrefBackFloating.addEventListener("pointerleave", clearBackHold);
+  elements.xrefBackFloating.addEventListener("pointercancel", clearBackHold);
   elements.xrefBackFloating.addEventListener("click", () => {
+    if (backHoldTriggered) return;
     const prev = state.navStack.pop();
     if (prev) {
       closeAllCrossRefPopups();

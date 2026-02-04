@@ -33,6 +33,10 @@ body::-webkit-scrollbar {
   height: 0;
 }
 
+body.tools-open {
+  overflow: hidden;
+}
+
 * {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -95,12 +99,36 @@ body:not([data-view="read"]) .topbar {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  width: min(320px, 70vw);
+  width: 48px;
   height: 48px;
 }
 
 .search-fab.open {
   z-index: 140;
+  width: min(320px, 70vw);
+}
+
+.tools-reset {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-family: "Optima", "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: var(--card-shadow);
+}
+
+.tools-status {
+  min-height: 18px;
+  font-size: 12px;
+  color: var(--muted);
+  font-family: "Optima", "Avenir Next", "Segoe UI", sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .search-fab-btn {
@@ -414,6 +442,18 @@ body:not([data-view="read"]) .topbar {
 
 .select-item:hover {
   background: rgba(0, 0, 0, 0.05);
+}
+
+.select-shell[data-select="chapterSelect"] .select-trigger,
+.select-shell[data-select="verseSelect"] .select-trigger {
+  justify-content: center;
+  text-align: center;
+}
+
+.select-shell[data-select="chapterSelect"] .select-item,
+.select-shell[data-select="verseSelect"] .select-item {
+  justify-content: center;
+  text-align: center;
 }
 
 .status {
@@ -968,6 +1008,145 @@ body:not([data-view="read"]) .topbar {
   font-size: 12px;
   cursor: pointer;
   white-space: nowrap;
+}
+
+#removeHighlightPill {
+  background: transparent;
+  border: 1px solid var(--border);
+}
+
+.tools-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(242, 242, 242, 0.82);
+  display: grid;
+  place-items: center;
+  z-index: 160;
+  backdrop-filter: blur(8px);
+}
+
+.tools-modal[hidden] {
+  display: none;
+}
+
+.tools-card {
+  width: min(920px, 94vw);
+  max-height: min(86vh, 900px);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 22px 20px 18px;
+  display: grid;
+  gap: 14px;
+  box-shadow: 0 24px 50px rgba(31, 31, 31, 0.2);
+  overflow: auto;
+}
+
+.tools-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tools-title {
+  font-family: "Optima", "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.4px;
+}
+
+.tools-close {
+  padding: 4px 10px;
+}
+
+.tools-meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.tools-section-title {
+  font-family: "Optima", "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.tools-list {
+  display: grid;
+  gap: 10px;
+}
+
+.tools-search-grid {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.tools-search-btn {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.9);
+  font-family: "Optima", "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  display: grid;
+  gap: 6px;
+}
+
+.tools-search-btn span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.tools-item {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.9);
+  display: grid;
+  gap: 8px;
+}
+
+.tools-item-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.tools-item-meta {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: "Optima", "Avenir Next", "Segoe UI", sans-serif;
+}
+
+.tools-item-excerpt {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.tools-item-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.tools-related summary {
+  cursor: pointer;
+  font-family: "Optima", "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.tools-status {
+  min-height: 18px;
+  font-size: 12px;
+  color: var(--muted);
+  font-family: "Optima", "Avenir Next", "Segoe UI", sans-serif;
 }
 
 .search-active .cards {

@@ -190,15 +190,15 @@
         <div class="palette-title">Highlight color</div>
         <div class="palette-row">
           <div class="palette-grid" id="paletteGrid"></div>
+          <button id="removeHighlightPill" class="pill" type="button">Remove</button>
         </div>
         <div class="palette-row palette-actions">
           <button id="favoriteBtn" class="pill" type="button">★ Favorite</button>
           <button id="memorizeBtn" class="pill" type="button">🧠 Memorize</button>
-          <button id="removeHighlightPill" class="pill" type="button">Remove</button>
           <button id="noteBtn" class="pill" type="button">✎ Note</button>
           <button id="crossRefBtn" class="pill" type="button">📖 Cross-refs</button>
           <button id="copyBtn" class="pill" type="button">📋 Copy</button>
-          <button id="searchOriginalBtn" class="pill" type="button">Search original</button>
+          <button id="toolsBtn" class="pill" type="button">🧰 Tools</button>
         </div>
       </div>
 
@@ -241,16 +241,34 @@
           <div class="transfer-panel">
             <div class="transfer-label">Export</div>
             <div class="transfer-desc">Download a JSON backup of your highlights, favorites, notes, and settings.</div>
-            <button class="primary" id="exportDataBtn" type="button">Download JSON</button>
+            <button class="primary" id="exportDataBtn" type="button">Download + Share JSON</button>
           </div>
           <div class="transfer-panel">
             <div class="transfer-label">Import</div>
-            <div class="transfer-desc">Choose a JSON backup to replace data on this device.</div>
+            <div class="transfer-desc">Choose a JSON backup to merge with data on this device.</div>
             <input class="transfer-file" id="importDataFile" type="file" accept="application/json" />
             <button class="primary" id="importDataBtn" type="button">Import JSON</button>
           </div>
         </div>
         <div class="transfer-status" id="transferStatus" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <div class="tools-modal" id="toolsModal" hidden>
+      <div class="tools-card" role="dialog" aria-modal="true" aria-labelledby="toolsTitle">
+        <div class="tools-header">
+          <div class="tools-title" id="toolsTitle">Tools</div>
+          <button class="ghost tools-close" id="toolsClose" type="button" aria-label="Close">✕</button>
+        </div>
+        <div class="tools-meta" id="toolsMeta"></div>
+        <div class="tools-section">
+          <div class="tools-section-title">Search the selected reference</div>
+          <div class="tools-list tools-search-grid" id="toolsResults"></div>
+        </div>
+        <div class="tools-status" id="toolsStatus" aria-live="polite">
+          <span id="toolsStatusText"></span>
+          <button class="ghost tools-reset" id="resetToolsBtn" type="button" hidden>Reset tools</button>
+        </div>
       </div>
     </div>
 
