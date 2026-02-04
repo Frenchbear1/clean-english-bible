@@ -14,6 +14,10 @@ A clean, focused Bible reader with reading tools built for everyday use.
 
 ## Use It
 
-For online, cross-platform use, open the deployment link.
+Online links:
+- Desktop: https://frenchbear1.github.io/aesthetic-bible/desktop/
+- Mobile: https://frenchbear1.github.io/aesthetic-bible/mobile/
+
+Note: If you send the desktop link to a phone (or the mobile link to a desktop), the layout won’t look right. Use the correct link for the device.
 
 To run it on a computer, download `Aesthetic-Bible-Portable.zip` from Assets and open it as an application.
